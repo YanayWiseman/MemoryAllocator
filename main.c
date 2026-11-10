@@ -2,16 +2,21 @@
 #include <stdbool.h>
 #include <unistd.h>
 #include <sys/mman.h>
+#include <stdlib.h>
 
 typedef struct
 {
     size_t size;
     bool isFree; 
-    chunk* next;
+    struct chunk* next;
 } chunk;
 
+chunk temp = {32, false, NULL};
+
+chunk* chunkPtr = NULL;
+
 void* myMalloc(size_t size);
-void free(void* ptr);
+void myFree(void* ptr);
 
 int main(void)
 {
@@ -20,15 +25,29 @@ int main(void)
 
 
     void* ptr = myMalloc(32);
-    return 0;
+    if(ptr == NULL)
+    {
+        perror("Failed to allocate memory.\n");
+        return EXIT_FAILURE;
+    }
+    myFree(ptr);
+
+    return EXIT_SUCCESS;
 }
 
 void* myMalloc(size_t size)
 {
+    void* ptr = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    if(ptr == MAP_FAILED)
+    {
+        return NULL;
+    }
+    chunkPtr = &temp;
 
+    return ptr;
 }
 
-void free(void* ptr)
+void myFree(void* ptr)
 {
-
+    munmap(ptr, chunkPtr->size);
 }
