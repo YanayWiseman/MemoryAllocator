@@ -49,5 +49,8 @@ void* myMalloc(size_t size)
 
 void myFree(void* ptr)
 {
-    munmap(ptr, chunkPtr->size);
+    if(munmap(ptr, chunkPtr->size) != 0)
+    {
+        perror("Failed to free allocated memory.\n");
+    } 
 }
