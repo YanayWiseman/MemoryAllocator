@@ -4,7 +4,7 @@
 #include <sys/mman.h>
 #include <stdlib.h>
 
-typedef struct
+typedef struct chunk
 {
     size_t size;
     bool isFree; 
@@ -37,6 +37,11 @@ int main(void)
 
 void* myMalloc(size_t size)
 {
+    // mmap fails with EINVAL if size is 0
+    if(size == 0)
+    {
+        return NULL;
+    }
     void* ptr = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     if(ptr == MAP_FAILED)
     {
@@ -49,6 +54,10 @@ void* myMalloc(size_t size)
 
 void myFree(void* ptr)
 {
+    if(ptr != NULL || chunkPtr == NULL)
+    {
+        return;
+    }
     if(munmap(ptr, chunkPtr->size) != 0)
     {
         perror("Failed to free allocated memory.\n");
