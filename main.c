@@ -3,17 +3,15 @@
 #include <unistd.h>
 #include <sys/mman.h>
 #include <stdlib.h>
+#include <errno.h>
+#include <stdint.h>
 
-typedef struct chunk
+typedef struct chunkHeader
 {
     size_t size;
     bool isFree; 
-    struct chunk* next;
-} chunk;
-
-chunk temp = {32, false, NULL};
-
-chunk* chunkPtr = NULL;
+    struct chunkHeader* next;
+} chunkHeader;
 
 void* myMalloc(size_t size);
 void myFree(void* ptr);
@@ -21,13 +19,11 @@ void myFree(void* ptr);
 int main(void)
 {
     printf("Hello World\n");
-    void* programBreakPtr = sbrk(0);
-
 
     void* ptr = myMalloc(32);
     if(ptr == NULL)
     {
-        perror("Failed to allocate memory.\n");
+        perror("Failed to allocate memory.");
         return EXIT_FAILURE;
     }
     myFree(ptr);
@@ -37,29 +33,36 @@ int main(void)
 
 void* myMalloc(size_t size)
 {
-    // mmap fails with EINVAL if size is 0
-    if(size == 0)
+    // mmap fails with EINVAL for these cases
+    if(size == 0 || size >= PTRDIFF_MAX)
     {
+        errno = EINVAL;
         return NULL;
     }
-    void* ptr = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+
+    void* ptr = mmap(NULL, sizeof(chunkHeader) + size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     if(ptr == MAP_FAILED)
     {
         return NULL;
     }
-    chunkPtr = &temp;
 
-    return ptr;
+    ptr = (chunkHeader*)ptr;
+    
+    return ptr + sizeof(chunkHeader);
 }
 
 void myFree(void* ptr)
 {
-    if(ptr != NULL || chunkPtr == NULL)
+    if(ptr == NULL || ptr - sizeof(chunkHeader) == NULL)
     {
         return;
     }
-    if(munmap(ptr, chunkPtr->size) != 0)
+
+    chunkHeader* ptrToHeader = ptr - sizeof(chunkHeader);
+
+    if(munmap(ptr, ptrToHeader->size) != 0)
     {
-        perror("Failed to free allocated memory.\n");
-    } 
+        perror("Failed to free allocated memory.");
+    }
+    ptrToHeader->isFree = true;
 }
