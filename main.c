@@ -194,13 +194,20 @@ void* myRealloc(void* ptr, size_t newSize)
         return NULL;
     }
 
+    // Return immediately if the current block already fits the requested size
+    if (ptrToHeader->size >= alignedNewSize)
+    {
+        return ptr;
+    }
+
     void* newPtr = myMalloc(newSize);
     if(!newPtr)
     {
         return NULL;
     }
-
-    memcpy(newPtr, ptr, ptrToHeader->size);
+    
+    size_t bytesToCopy = (ptrToHeader->size < newSize) ? ptrToHeader->size : newSize;
+    memcpy(newPtr, ptr, bytesToCopy);
     myFree(ptr);
 
     return newPtr;
