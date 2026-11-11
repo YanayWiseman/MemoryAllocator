@@ -45,14 +45,13 @@ void* myMalloc(size_t size)
 
     // Find free block of the requested size
     ChunkHeader* curr = head;
-    while(curr != NULL)
+    while(curr)
     {
         if(curr->isFree && curr->size >= size)  // Found a free block
         {
             if(curr->size - size >= sizeof(ChunkHeader) + 1)  // perform block splitting
             {
                 size_t remainder = curr->size - size - sizeof(ChunkHeader);
-                curr->isFree = false;
                 curr->size = size;
 
                 uint8_t* casted = (uint8_t*)curr;
@@ -106,4 +105,40 @@ void myFree(void* ptr)
 
     // Mark as free
     ptrToHeader->isFree = true;
+    uint8_t* byteSizedPtr = (uint8_t*)casted;
+
+
+    // Coalesce blocks
+    // Check forwords
+    if(ptrToHeader->next)  // First check if it exists
+    {
+        ChunkHeader* temp = ptrToHeader->next;
+        if(ptrToHeader->next->isFree && byteSizedPtr + ptrToHeader->size == (uint8_t*)temp)
+        {
+            // Coalesce
+            ChunkHeader* toCoalesce = ptrToHeader->next;
+            ptrToHeader->next = ptrToHeader->next->next;  // Isolate the block in the middle
+            ptrToHeader->size += toCoalesce->size + sizeof(ChunkHeader);
+        }
+    }
+
+    // Check backwords
+    if(head)
+    {
+        ChunkHeader* curr = head;
+        
+        // Find the node before ptrToHeader and coalesce if its free
+        while(curr)
+        {
+            uint8_t* currBytePtr = (uint8_t*)curr;
+            if(curr->next == ptrToHeader && curr->isFree && (currBytePtr + sizeof(ChunkHeader) + curr->size == (uint8_t*)ptrToHeader))
+            {
+                // Coalesce
+                curr->next = ptrToHeader->next;
+                curr->size += ptrToHeader->size + sizeof(ChunkHeader);
+                break;
+            }
+            curr = curr->next;
+        }  
+    }
 }
