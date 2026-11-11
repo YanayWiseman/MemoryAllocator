@@ -6,6 +6,8 @@
 #include <errno.h>
 #include <stdint.h>
 
+#define ALIGNMENT 16
+
 typedef struct ChunkHeader
 {
     size_t size;
@@ -17,6 +19,7 @@ ChunkHeader* head = NULL;
 
 void* myMalloc(size_t size);
 void myFree(void* ptr);
+size_t roundUpToAlignment(size_t num);
 
 int main(void)
 {
@@ -141,4 +144,9 @@ void myFree(void* ptr)
             curr = curr->next;
         }  
     }
+}
+
+size_t roundUpToAlignment(size_t num)
+{
+    return (num + ALIGNMENT - 1) & ~(ALIGNMENT -1);
 }
