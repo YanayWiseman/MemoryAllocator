@@ -47,8 +47,24 @@ void* myMalloc(size_t size)
     ChunkHeader* curr = head;
     while(curr != NULL)
     {
-        if(curr->isFree && curr->size >= size)
+        if(curr->isFree && curr->size >= size)  // Found a free block
         {
+            if(curr->size - size >= sizeof(ChunkHeader) + 1)  // perform block splitting
+            {
+                size_t remainder = curr->size - size - sizeof(ChunkHeader);
+                curr->isFree = false;
+                curr->size = size;
+
+                uint8_t* casted = (uint8_t*)curr;
+
+                ChunkHeader* splitted = (ChunkHeader*)(casted + sizeof(ChunkHeader) + size);
+                splitted->isFree = true;
+                splitted->size = remainder;
+
+                // Insert splitted into the linked list
+                splitted->next = curr->next;
+                curr->next = splitted;
+            }
             curr->isFree = false;
             return curr + 1;
         }
@@ -66,7 +82,7 @@ void* myMalloc(size_t size)
     header->size = size;
     header->next = head;
     head = header;
-        
+
     // Increment by sizeof(ChunkHeader)
     return header + 1;
 }
