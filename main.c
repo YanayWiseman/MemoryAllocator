@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <stdbool.h>
 #include <unistd.h>
 #include <sys/mman.h>
 #include <stdlib.h>
@@ -11,9 +10,9 @@
 typedef struct ChunkHeader
 {
     size_t size;
-    bool isFree; 
+    bool isFree;
     struct ChunkHeader* next;
-} ChunkHeader;
+} ChunkHeader __attribute__((aligned(16)));
 
 ChunkHeader* head = NULL;
 
