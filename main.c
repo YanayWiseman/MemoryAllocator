@@ -64,8 +64,9 @@ void* myMalloc(size_t size)
     ChunkHeader* header = (ChunkHeader*)ptr;
     header->isFree = false;
     header->size = size;
-    header->next = NULL;
-    
+    header->next = head;
+    head = header;
+        
     // Increment by sizeof(ChunkHeader)
     return header + 1;
 }
@@ -80,7 +81,7 @@ void myFree(void* ptr)
     // Find pointer to the chunk's header
     ChunkHeader* casted = (ChunkHeader*)ptr;
     ChunkHeader* ptrToHeader = casted - 1;
-    
+
     // Avoid double frees
     if(ptrToHeader->isFree)
     {
@@ -89,16 +90,4 @@ void myFree(void* ptr)
 
     // Mark as free
     ptrToHeader->isFree = true;
-
-    // Combine to the linked list
-    ChunkHeader* curr = head;
-    while(curr)
-    {
-        if(curr->next == NULL)
-        {
-            curr->next = ptrToHeader;
-            break;
-        }
-        curr = curr->next;
-    }
 }
