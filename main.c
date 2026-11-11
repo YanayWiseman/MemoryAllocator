@@ -21,6 +21,7 @@ ChunkHeader* head = NULL;
 void* myMalloc(size_t size);
 void myFree(void* ptr);
 void* myCalloc(size_t num, size_t size);
+void* myRealloc(void* ptr, size_t newSize);
 size_t roundUpToAlignment(size_t num);
 
 int main(void)
@@ -167,6 +168,42 @@ void* myCalloc(size_t num, size_t size)
     memset(ptr, 0, num * size);
 
     return ptr;
+}
+
+void* myRealloc(void* ptr, size_t newSize)
+{
+    // If ptr is NULL, behave just like malloc()
+    if(!ptr)
+    {
+        return myMalloc(newSize);
+    }
+    
+    // If the new size is 0, free the allocated memory
+    if(!newSize)
+    {
+        myFree(ptr);
+        return NULL;
+    }
+
+    // Check the existing block's current capacity
+    ChunkHeader* ptrToHeader = ((ChunkHeader*)ptr) - 1;  // Find the Header
+    size_t alignedNewSize = roundUpToAlignment(newSize);
+    if (!alignedNewSize || alignedNewSize >= (PTRDIFF_MAX - sizeof(ChunkHeader)))
+    {
+        errno = EINVAL;
+        return NULL;
+    }
+
+    void* newPtr = myMalloc(newSize);
+    if(!newPtr)
+    {
+        return NULL;
+    }
+
+    memcpy(newPtr, ptr, ptrToHeader->size);
+    myFree(ptr);
+
+    return newPtr;
 }
 
 size_t roundUpToAlignment(size_t num)
