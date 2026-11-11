@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include <string.h>
 #include <sys/mman.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -19,6 +20,7 @@ ChunkHeader* head = NULL;
 
 void* myMalloc(size_t size);
 void myFree(void* ptr);
+void* myCalloc(size_t num, size_t size);
 size_t roundUpToAlignment(size_t num);
 
 int main(void)
@@ -93,7 +95,7 @@ void* myMalloc(size_t size)
 
 void myFree(void* ptr)
 {
-    if(ptr == NULL)
+    if(!ptr)
     {
         return;
     }
@@ -146,6 +148,25 @@ void myFree(void* ptr)
             curr = curr->next;
         }  
     }
+}
+
+void* myCalloc(size_t num, size_t size)
+{
+    if (size != 0 && num > SIZE_MAX / size)
+    {
+        errno = ENOMEM;
+        return NULL;
+    }
+    void* ptr = myMalloc(num * size);
+    if(!ptr)
+    {
+        return NULL;
+    }
+
+    // Initialize everything
+    memset(ptr, 0, num * size);
+
+    return ptr;
 }
 
 size_t roundUpToAlignment(size_t num)
