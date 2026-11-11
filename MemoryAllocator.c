@@ -1,5 +1,6 @@
 #include "MemoryAllocator.h"
 
+ChunkHeader* head = NULL;
 
 void* myMalloc(size_t size)
 {

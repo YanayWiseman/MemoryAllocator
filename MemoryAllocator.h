@@ -11,15 +11,14 @@
 
 #define ALIGNMENT 16
 
-typedef struct ChunkHeader
+typedef struct __attribute__((aligned(ALIGNMENT))) ChunkHeader
 {
     size_t size;
     bool isFree;
     struct ChunkHeader* next;
-} ChunkHeader __attribute__((aligned(ALIGNMENT)));
+} ChunkHeader;
 
-ChunkHeader* head = NULL;
-
+extern ChunkHeader* head;
 
 void* myMalloc(size_t size);
 void myFree(void* ptr);
