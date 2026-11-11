@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <unistd.h>
+#include <stdbool.h>
 #include <sys/mman.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -12,7 +13,7 @@ typedef struct ChunkHeader
     size_t size;
     bool isFree;
     struct ChunkHeader* next;
-} ChunkHeader __attribute__((aligned(16)));
+} ChunkHeader __attribute__((aligned(ALIGNMENT)));
 
 ChunkHeader* head = NULL;
 
@@ -38,6 +39,8 @@ int main(void)
 
 void* myMalloc(size_t size)
 {
+    // Align to the nearest multiple of 16
+    size = roundUpToAlignment(size);
     // mmap() fails with EINVAL for these cases
     if(size == 0 || size >= (PTRDIFF_MAX - sizeof(ChunkHeader)))
     {
@@ -51,7 +54,7 @@ void* myMalloc(size_t size)
     {
         if(curr->isFree && curr->size >= size)  // Found a free block
         {
-            if(curr->size - size >= sizeof(ChunkHeader) + 1)  // perform block splitting
+            if(curr->size - size >= sizeof(ChunkHeader) + ALIGNMENT)  // perform block splitting
             {
                 size_t remainder = curr->size - size - sizeof(ChunkHeader);
                 curr->size = size;
@@ -147,5 +150,10 @@ void myFree(void* ptr)
 
 size_t roundUpToAlignment(size_t num)
 {
+    // Check overflow
+    if (num > SIZE_MAX - (ALIGNMENT - 1))
+    {
+        return 0;
+    }
     return (num + ALIGNMENT - 1) & ~(ALIGNMENT -1);
 }
