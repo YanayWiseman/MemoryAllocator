@@ -1,6 +1,6 @@
 # Custom Memory Allocator
 
-A malloc/free, calloc and reallooc replacement in C, built on top of mmap(). I wrote it to understand how heap allocators work.
+A malloc/free, calloc and realloc replacement in C, built on top of mmap(). I wrote it to understand how heap allocators work.
 
 ## Features
 
